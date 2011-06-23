@@ -28,17 +28,25 @@ int main(int argc, char *argv[])
     int servPort;
     int result;
     int pid = 0;
+    char logfilename[32];
 
     char przekroczona_liczba_klientow[] = "ERROR: Przekroczona liczba klientow";
 
-    if (argc != 2) {
-       fprintf(stderr, "Uzycie: %s <Port>\n",argv[0]);
+    if (argc < 2 || argc > 3) {
+       fprintf(stderr, "Usage: %s <port> [log_file_name]\n",argv[0]);
        exit(1);
     }
 
-    if((fp = fopen("log","a"))!=NULL)
+    if(argc == 3)
     {
-        printf("INFO: Pomyslnie otwarto plik log!\n");
+        sprintf(logfilename, "%s", argv[2]);
+    }
+    else
+        sprintf(logfilename, "%s", "/var/log/wup.log");
+
+    if( (fp = fopen(logfilename,"a")) != NULL )
+    {
+        printf("INFO: Pomyslnie otwarto plik log: %s\n",logfilename);
     }
     else
     {
@@ -137,7 +145,7 @@ int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr)
     //if (recvfrom(clientFd, buff, 255, 0, (struct sockaddr *)&clientaddr, &klientDl) > 0)
     while(1)
     {
-        fp = fopen("log","a");
+        fp = fopen("/var/log/wup.log","a");
 
         if (recv(clientFd, buff, 255, 0))
         {
