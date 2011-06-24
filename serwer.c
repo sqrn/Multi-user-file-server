@@ -105,9 +105,9 @@ int main(int argc, char *argv[])
                     sprintf(filename, "session/CLIENT_%i", childCount);
                     if(remove(filename) < 0)
                     {
-                        printf("ERROR: Nie usunieto pliku sesji skojarzonego z klientem!\n");
+                        printf("WARNING: Nie usunieto pliku sesji skojarzonego z klientem!\n");
                         /* zapisz do logu */
-                        fprintf(fp, "%s", "ERROR: Nie usunieto pliku sesji skojarzonego z klientem!\n");
+                        fprintf(fp, "%s", "WARNING: Nie usunieto pliku sesji skojarzonego z klientem!\n");
                     }
 
                     printf("INFO: Zamykam potomka.\n");
@@ -208,7 +208,7 @@ int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr)
                     if(send_message(clientFd, clientaddr, textbuffer) < 0)
                     {
                         /* Jezeli wystapi blad, aby klienta poinformowac, zapisz informacje w logu */
-                        sprintf(textbuffer, "WARRNING: Plik %s odnaleziony. Klient nie zostal poinformowany.", filename);
+                        sprintf(textbuffer, "WARNING: Plik %s odnaleziony. Klient nie zostal poinformowany.", filename);
                         fprintf(fp, "%s", textbuffer);
                     }
                 }

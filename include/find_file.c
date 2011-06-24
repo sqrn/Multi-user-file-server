@@ -15,8 +15,9 @@ int find_file(int clientFd, struct sockaddr_in clientaddr, char filename[32])
 {
     FILE *fh;
     char filepath[MAX_BUFFER];
-    char textbuffer[MAX_BUFFER+1];
+    //char textbuffer[MAX_BUFFER+1];
     printf("INFO: Szukam pliku: %s\n", filename);
+    char word[MAX_BUFFER];
     /* Dopisanie do funkcji nazwy folderu przeszukiwania */
     int i=0;
 
@@ -26,10 +27,9 @@ int find_file(int clientFd, struct sockaddr_in clientaddr, char filename[32])
         if ((fh = fopen(filepath, "r")) != NULL)
         {
             printf("Szukam w pliku: %s\n", filepath);
-            while (!feof(fh))
+            while (fscanf(fh, "%s", word) == 1)
             {
-                fread(textbuffer, 1, MAX_BUFFER, fh);
-                if(textbuffer == filename)
+                if(strncmp(word, filename, strlen(filename)) == 0 )
                 {
                     fclose(fh);
                     return 0;
@@ -39,7 +39,8 @@ int find_file(int clientFd, struct sockaddr_in clientaddr, char filename[32])
             i++;
             continue;
         }
-
+        /* jezeli pliku nie ma, zwieksz licznik */
+        i++;
     }
     return -1;
 }

@@ -17,7 +17,7 @@ void save_file_list(char buff[255], char client[16])
     while ((answer = strtok(NULL, " ")) != NULL)
     {
         strcat(file_list, answer);
-        sprintf(file_list, "%s ", file_list);
+        sprintf(file_list, "%s\n", file_list);
     }
 
     sprintf(filename, "session/CLIENT_%s", client);
