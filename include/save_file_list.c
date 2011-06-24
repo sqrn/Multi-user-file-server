@@ -1,11 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #define MAX_BUFFER 80
-/**
-Zapisuje liste plikow udostepnianych przez klienta.
-Po sprawdzeniu poprawnosci podanego klucza sesji, odnajduje plik sesji klienta i sczytuje z niego nazwe uzytkownika.
-Nastepnie tworzy plik o nazwie filelist_<nazwa_uzytkownika> w ktorym zapisuje liste udostepnianych przez uzytkownika plikow przeslana w komunikacie.
-**/
+
 void save_file_list(char buff[255], char client[16])
 {
     char *answer;

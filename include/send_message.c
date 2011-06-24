@@ -4,11 +4,7 @@
 #include <stdio.h>
 #define MAX_BUFFER              80
 
-/**
-Ogolna funkcja do wysylania komunikatow przez istniejace gniazdo.
-Pobiera deskryptor gniazda, strukture adresowa klienta i komunikat, ktory ma byc do niego wyslany.
-Nastepnie wysyla komunikat. W przypadku poprawnego wyslania zwraca 0, a w przypadku bledu zwraca -1.
-*/
+
 int send_message(int clientFd, struct sockaddr_in clientaddr, char textbuffer[MAX_BUFFER+1])
 {
     int textDl;
