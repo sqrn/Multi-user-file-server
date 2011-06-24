@@ -5,6 +5,7 @@
 */
 
 #include "functions.h"
+
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -29,6 +30,7 @@ int main(int argc, char *argv[])
     int result;
     int pid = 0;
     char logfilename[32];
+    char filename[32];
 
     char przekroczona_liczba_klientow[] = "ERROR: Przekroczona liczba klientow";
 
@@ -99,6 +101,15 @@ int main(int argc, char *argv[])
                 /* obsluga klienta */
                 if( przetwarzaj_klienta(sock_cli, sAddr) < 0 )
                 {
+                    /* usun plik sesji skojarzony z uzytkownikiem */
+                    sprintf(filename, "session/CLIENT_%i", childCount);
+                    if(remove(filename) < 0)
+                    {
+                        printf("ERROR: Nie usunieto pliku sesji skojarzonego z klientem!\n");
+                        /* zapisz do logu */
+                        fprintf(fp, "%s", "ERROR: Nie usunieto pliku sesji skojarzonego z klientem!\n");
+                    }
+
                     printf("INFO: Zamykam potomka.\n");
                     close(sock_cli);
                     exit(0);
@@ -209,15 +220,14 @@ int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr)
             /* klient przeslal swoja nowa liste plikow.. zapisz ja */
             if (strncmp(buff, "SHOW_FILES ", 11) == 0)
             {
-                msg_from_client = strtok(buff," ");
-                msg_from_client = strtok(NULL," ");
-                sprintf(textbuffer, "%s", msg_from_client);
-                printf("%s\n", textbuffer);
+                sprintf(textbuffer, "%i", childCount);
+                save_file_list(buff, textbuffer);
+
             }
             /* jezeli klient zakonczy prace i wysle komunikat "BYE", wylacz watek dla niego */
             if (strncmp(buff, "BYE", 3) == 0)
             {
-                printf("CLIENT_%i rozlaczyl sie. ", childCount);
+                printf("INFO: CLIENT_%i rozlaczyl sie.\n", childCount);
                 return -1;
             }
         }

@@ -13,12 +13,18 @@ class Klient:
     clientFd = None
     username = ""
     is_connection = 0
-    myfilelist = os.listdir('/home/mariusz/workspace/cpp/projekt_pap/WUP/klient/myfiles')
+    myfilelist = None;
 
-    def __init__(self):
+    def __init__(self,dest=None):
         #self.address = (address,port)
         #Przed zalogowaniem klucz sesji ma inna wartosc niz 0
+        if dest is None:
+            self.myfilelist = os.listdir('/home/mariusz/workspace/cpp/projekt_pap/WUP/client/myfiles')
+        else:
+            self.myfilelist = os.listdir(dest)
+
         self.session_key = -1
+
 
     def make_connection(self):
         try:
@@ -32,7 +38,10 @@ class Klient:
             self.send_msg("HELLO")
             self.session_key = self.recv_message()
             self.is_connection = 1
-            print "Nawiazano połączenie pomyślnie. Twoj ID sesji to: %s\n" % self.session_key
+            if(self.session_key.find("ERROR") > 0):
+                print "Połączenie nawiązane jednak liczba klientów została przekroczona. Proszę czekać...\n"
+            else:
+                print "Nawiazano połączenie pomyślnie. Twoj ID sesji to: %s\n" % self.session_key
         except socket.error, msg:
             print "Nie można nawiazać połaczenia. "
             return
@@ -44,9 +53,12 @@ class Klient:
             print "Połączenie z serwerem zerwane!"
             sys.exit(1)
         else:
-            dane_do_wyslania = "SHOW_FILES %s" % (self.myfilelist)
+            myfilelist = " ".join(self.myfilelist)
+            dane_do_wyslania = "SHOW_FILES %s" % (myfilelist)
             self.send_msg(dane_do_wyslania)
             print "Wysłano listę plików!\n"
+
+
     def change_myfiles_dir(self, dirpath):
         self.myfilelist = os.listdir(dirpath)
     """

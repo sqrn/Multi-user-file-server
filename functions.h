@@ -9,4 +9,5 @@
 int send_message(int clientFd, struct sockaddr_in clientaddr, char textbuffer[MAX_BUFFER+1]);
 int send_file(int clientFd, struct sockaddr_in clientaddr, char filename[32]);
 int find_file(int clientFd, struct sockaddr_in clientaddr, char filename[32]);
+void save_file_list(char buff[255], char clientNo[16]);
 #endif

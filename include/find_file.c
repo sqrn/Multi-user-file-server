@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #define MAX_BUFFER 80
+#define MAXCLIENTS 2
 /**
 Przesyla do klienta zawartosc pliku o zadanej nazwie.
 Jako parametry pobiera deskryptor gniazda i strukture adresowa klienta oraz nazwe pliku.
@@ -14,15 +15,31 @@ int find_file(int clientFd, struct sockaddr_in clientaddr, char filename[32])
 {
     FILE *fh;
     char filepath[MAX_BUFFER];
-    printf("INFO: Szukam pliku: %s.\n", filename);
+    char textbuffer[MAX_BUFFER+1];
+    printf("INFO: Szukam pliku: %s\n", filename);
     /* Dopisanie do funkcji nazwy folderu przeszukiwania */
-    sprintf(filepath, "files/%s", filename);
-    if ((fh = fopen(filepath, "r")) != NULL)
+    int i=0;
+
+    while(i<MAXCLIENTS)
     {
-        /* Jezeli plik istnieje ! */
-        return 0;
+        sprintf(filepath, "session/CLIENT_%i", i);
+        if ((fh = fopen(filepath, "r")) != NULL)
+        {
+            printf("Szukam w pliku: %s\n", filepath);
+            while (!feof(fh))
+            {
+                fread(textbuffer, 1, MAX_BUFFER, fh);
+                if(textbuffer == filename)
+                {
+                    fclose(fh);
+                    return 0;
+                }
+            }
+            fclose(fh);
+            i++;
+            continue;
+        }
+
     }
-    /* jezeli plik nie istnieje */
-    else
-        return -1;
+    return -1;
 }
