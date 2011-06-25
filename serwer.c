@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <string.h>
+#include <arpa/inet.h>
 
 #define MAXBUF 80
 #define MAXCLIENTS 2
@@ -58,7 +59,7 @@ int main(int argc, char *argv[])
 
     listensock = socket(PF_INET, SOCK_STREAM, 0);
     if (listensock <0) {
-       perror("serwer");
+       perror("ERROR: Nie mozna utworzyc gniazda!\n");
        exit(1);
     }
     servPort=atoi(argv[1]);
@@ -68,12 +69,12 @@ int main(int argc, char *argv[])
     sAddr.sin_addr.s_addr = INADDR_ANY;
     result = bind(listensock, (struct sockaddr *) &sAddr, sizeof(sAddr));
     if (result < 0) {
-        perror("serwer");
+        perror("ERROR: bind serwer error.\n");
         exit(1);
     }
     result = listen(listensock, 5);
     if (result < 0) {
-        perror("serwer");
+        perror("EROR: Listen serwer error.\n");
         exit(1);
     }
 
@@ -156,7 +157,11 @@ int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr)
     //if (recvfrom(clientFd, buff, 255, 0, (struct sockaddr *)&clientaddr, &klientDl) > 0)
     while(1)
     {
-        fp = fopen("/var/log/wup.log","a");
+        if( (fp = fopen("/var/log/wup.log","a")) == NULL)
+        {
+            printf("ERROR: Nie mozna otworzyc pliku log. Zamykam serwer.\n");
+            exit(1);
+        }
 
         if (recv(clientFd, buff, 255, 0))
         {
@@ -179,6 +184,14 @@ int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr)
                 }
                 else
                 {
+                    /* jezeli klient sie polaczy, trzeba zapisac jego adres do pliku ! */
+                    // wykorzystac funkcje getpeername()
+                    if(getpeername(clientFd, (struct sockaddr *)&clientaddr, &klientDl) != 0)
+                        perror("ERROR: getpeername()");
+                    else
+                    {
+                        printf("INFO: Doszedl nowy klient: %s:%d\n", inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
+                    }
                     /* dodaj informacje do loga */
                     fprintf(fp, "INFO: Nawiazano nowe polaczenie!\n");
                 }
@@ -213,13 +226,18 @@ int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr)
                     }
                 }
             }
+            /* przychodzi zadanie od klienta - klient chce otrzymac plik */
             if (strncmp(buff, "GET_FILE ",9) == 0)
             {
-                printf("Wysylanie pliku\n");
+                msg_from_client = strtok(buff, " ");
+                msg_from_client = strtok(NULL, " ");
+                sprintf(filename, "%s", msg_from_client);
+                send_file(clientFd, clientaddr, filename);
             }
             /* klient przeslal swoja nowa liste plikow.. zapisz ja */
             if (strncmp(buff, "SHOW_FILES ", 11) == 0)
             {
+                printf("INFO: Klient przeslal liste plikow.\n");
                 sprintf(textbuffer, "%i", childCount);
                 save_file_list(buff, textbuffer);
 
