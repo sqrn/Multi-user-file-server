@@ -4,16 +4,11 @@
 import sys
 import os
 import socket
+import threading
 #import getopt
+from clientfileserv import ClientFileServer
 
 class Klient:
-    port = 0
-    address = ()
-    session_key = -1
-    clientFd = None
-    username = ""
-    is_connection = 0
-    myfilelist = None;
 
     def __init__(self,dest=None):
         #self.address = (address,port)
@@ -29,15 +24,17 @@ class Klient:
     def make_connection(self):
         try:
             self.clientFd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.fileClient = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         except socket.error:
             self.clientFd = None
+            self.fileClient = None
             print "Nie mozna utworzyc gniazda"
         try:
             self.clientFd.connect(self.address)
             #przywitaj sie
+            self.is_connection = 1
             self.send_msg("HELLO")
             self.session_key = self.recv_message()
-            self.is_connection = 1
             if(self.session_key.find("ERROR") > 0):
                 print "Połączenie nawiązane jednak liczba klientów została przekroczona. Proszę czekać...\n"
             else:
@@ -47,11 +44,10 @@ class Klient:
             return
 
 
-
     def send_file_list(self):
         if(self.check_connection() is False):
             print "Połączenie z serwerem zerwane!"
-            sys.exit(1)
+            return
         else:
             myfilelist = " ".join(self.myfilelist)
             dane_do_wyslania = "SHOW_FILES %s" % (myfilelist)
@@ -62,12 +58,12 @@ class Klient:
     def change_myfiles_dir(self, dirpath):
         self.myfilelist = os.listdir(dirpath)
     """
-    Wysyla do serwera pytanie o plik. Uzyskuje odpowiedz
+    Wysyla do serwera pytanie o plik. Uzyskuje adres IP klienta, ktory plik posiada.
     """
     def find_file(self, filename):
         if(self.check_connection() is False):
             print "Połączenie z serwerem zerwane!"
-            sys.exit(1)
+            return
         else:
             dane_do_wyslania = "FIND_FILE %s" % (filename)
             self.send_msg(dane_do_wyslania)
@@ -76,19 +72,19 @@ class Klient:
             print "Serwer: %s" % (odpowiedz)
             return
     """
-    Metoda pobiera plik z serwera.
+    Metoda pobiera plik od klienta.
     """
     def get_file(self,filename):
         if(self.check_connection() is False):
             print "Połączenie z serwerem zerwane!"
-            sys.exit(1)
+            return
         else:
             dane_do_wyslania = "GET_FILE %s" % (filename)
             self.send_msg(dane_do_wyslania)
             odpowiedz = self.recv_message()
 
     """
-    Metoda przesyla plik na serwer.
+    Przesyla plik do klienta.
     """
     def send_file(self):
         pass
@@ -97,13 +93,19 @@ class Klient:
     Sprawdza, czy polaczenie TCP z serwerem jest nadal aktywne
     """
     def check_connection(self):
-        return True
+        if self.is_connection > 0:
+            return True
+        else:
+            return False
 
     """
     Ogolna funkcja. Przesyla komunikat do serwera. Jezeli wystapi wyjatek, metoda zostanie przerwane i wyswietlony
     zostanie odpowiedni komunikat
     """
     def send_msg(self, msg):
+        if(self.check_connection() is False):
+            print "Połączenie z serwerem zerwane!"
+            return
         try:
             self.clientFd.send(msg)
         except NameError:
@@ -156,8 +158,22 @@ class Klient:
                     break
             elif promp[0] == 'send':
                 self.send_file_list()
+            elif promp[0] == 'get':
+                if len(promp) == 2:
+                    self.get_file(promp[1])
+
             elif promp[0] == 'find':
-                self.find_file(promp[1])
+                if len(promp) == 2:
+                    self.find_file(promp[1])
+                else:
+                    print "Uzycie: find <nazwa_szukanego_pliku>"
+            elif promp[0] == 'quit':
+                self.pozegnaj_sie()
+                sys.exit(1)
+            elif promp[0] == 'bye':
+                print "Zrywam połączenie z serwerem"
+                self.pozegnaj_sie()
+                self.is_connection = 0
 
             else:
                 print "Nie rozpoznano polecenia. Wpisz help, aby uzyskac pomoc."
@@ -175,11 +191,14 @@ def clean(self):
 
 def usage():
     version()
-    print "connect <adres> <port>       Nawiazuje polaczenie z serwerem"
-    print "find <nazwa_pliku>           Pyta serwer, czy plik istnieje"
-    print "send <nazwa_pliku>           Przesyła wskazany plik na serwer"
+    print "connect \t<adres> <port>\tNawiazuje polaczenie z serwerem"
+    print "find \t\t<nazwa_pliku>\tPyta serwer, czy plik istnieje"
+    print "send \t\t<nazwa_pliku>\tPrzesyła wskazany plik na serwer"
+    print "get \t\t<nazwa_pliku>\tWysyła żadanie o plik"
+    print '{0}\t\t\t\t{1}'.format('bye','Zrywa połączenie z serwerem')
+    print '{0}\t\t\t\t{1}'.format('quit','Zamyka program')
 
-    print "help                         Wyswietla pomoc"
+    print "help\t\t\t\tWyswietla pomoc"
 
 def version():
 	print "Wersja programu: 1.0 Alfa, klient.\nAutor: Mariusz Skóra\nProjekt PAP - 2010/2011\n"
@@ -187,6 +206,12 @@ def version():
 
 
 def main():
+    #uzyc getopt!
+    threads = []
+    w = ClientFileServer(5999)
+    w.daemon = True
+    w.start()
+
     kl = Klient()
     try:
         kl.live()

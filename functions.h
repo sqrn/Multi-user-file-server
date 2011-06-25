@@ -1,4 +1,7 @@
-//klient_funkcje.h
+/**
+Plik nagłówkowy
+*/
+
 #ifndef KLIENT_FUNKCJE_H
 #define KLIENT_FUNKCJE_H
 

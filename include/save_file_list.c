@@ -2,6 +2,9 @@
 #include <stdio.h>
 #define MAX_BUFFER 80
 
+/**
+Zapisuje przesłaną przez klienta listę plików. Zapisuje w pliku sesji.
+*/
 void save_file_list(char buff[255], char client[16])
 {
     char *answer;
