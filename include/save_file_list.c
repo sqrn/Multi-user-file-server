@@ -22,9 +22,9 @@ void save_file_list(char buff[255], char client[16])
     sprintf(filename, "session/CLIENT_%s", client);
 
     /* sprawdza czy plik sesji istnieje, jezeli nie, tworzy go.. otwiera do NADPISYWANIA */
-    if ((fh = fopen(filename, "w")) != NULL)
+    if ((fh = fopen(filename, "a")) != NULL)
     {
-        fprintf(fh, "%s", file_list);
+        fprintf(fh, "\n%s", file_list);
         fclose(fh);
     }
 }

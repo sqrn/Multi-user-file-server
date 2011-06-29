@@ -79,20 +79,44 @@ class Klient:
         if(self.check_connection() is False):
             print "Połączenie z serwerem zerwane!"
             return
-        else:
-            #przesyla o plik zapytanie do serwera
-            filename = filename + '\0'
-            dane_do_wyslania = "GET_FILE %s" % (filename)
-            self.send_msg(dane_do_wyslania)
-            cli_data = self.recv_message() #powinien otrzymac liste adresowa klienta w postaci ['addr','port']
-            print cli_data
-            """
-            try:
-                self.fileClient.connect(clientaddr,clientport)
-            except socket.error, (value,message):
-                print "Nie mozna pobrac pliku!"
-                return
-            """
+        #przesyla o plik zapytanie do serwera
+        filepath = filename + '\0'
+        dane_do_wyslania = "GET_FILE %s" % (filepath)
+        self.send_msg(dane_do_wyslania)
+        cli_data = self.recv_message() #powinien otrzymac liste adresowa klienta w postaci ['addr','port']
+        #po otrzymaniu informacji o adresie IP klienta posiadajacego plik....
+        #address = (cli_data,9999)
+        outfile = open("download/"+filename,"w",4096)
+        #print address
+
+        try:
+            self.fileClient.connect(('127.0.0.1',9999))
+        except socket.error, (value,message):
+            print "Nie mozna nawiac polaczenia z klientem!\n"
+            return
+        try:
+            self.fileClient.send("GET_FILE "+filename)
+            data = self.fileClient.recv(4096)
+        except socket.error, (value,message):
+            print "Nie mozna pobrac pliku.Prosze sprobowac ponownie pozniej.\n"
+            return
+
+        try:
+            outfile.write(data)
+        except IOError:
+            print "Nie mozna zapisac pliku!"
+            return
+
+        try:
+            self.fileClient.send("DONE")
+            succes = 1
+        except socket.error, (value,msg):
+            print "Nie mozna zakonczyc polaczenia!"
+            return
+
+        if succes == 1:
+            self.fileClient.close()
+
     """
     Sprawdza, czy polaczenie TCP z serwerem jest nadal aktywne
     """
@@ -212,7 +236,7 @@ def version():
 def main():
     #uzyc getopt!
     threads = []
-    w = ClientFileServer(5999)
+    w = ClientFileServer(9999)
     w.daemon = True
     w.start()
 

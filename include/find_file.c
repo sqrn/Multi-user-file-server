@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #define MAX_BUFFER 80
-#define MAXCLIENTS 2
+#define MAXCLIENTS 10
 
 /**
 Funkcja przeszukuje pliki sesji połączonych użytkowników w celu znalezienia szukanego przez klienta wysyłającego zapytanie - pliku.
@@ -13,11 +13,9 @@ W innym razie funkcja zwraca -1.
 int find_file(int clientFd, struct sockaddr_in clientaddr, char filename[32])
 {
     FILE *fh;
-    char filepath[MAX_BUFFER];
-    //char textbuffer[MAX_BUFFER+1];
+    char filepath[32];
     printf("INFO: Szukam pliku: %s\n", filename);
     char word[MAX_BUFFER];
-    /* Dopisanie do funkcji nazwy folderu przeszukiwania */
     int i=0;
 
     while(i<MAXCLIENTS)
@@ -31,6 +29,7 @@ int find_file(int clientFd, struct sockaddr_in clientaddr, char filename[32])
                 if(strncmp(word, filename, strlen(filename)) == 0 )
                 {
                     fclose(fh);
+                    printf("INFO: Plik posiada klient o ID: CLIENT_%i\n",i);
                     /* zwraca numer klienta, ktorzy posiada szukany plik - conajmniej 0 */
                     return i;
                 }

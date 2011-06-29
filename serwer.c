@@ -17,7 +17,7 @@
 #include <arpa/inet.h>
 
 #define MAXBUF 80
-#define MAXCLIENTS 2
+#define MAXCLIENTS 10
 FILE *fp;
 int childCount=0;
 int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr);
@@ -191,7 +191,7 @@ int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr)
                         }
                         else
                         {
-                            sprintf(textbuffer, "['%s','%d']", inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
+                            sprintf(textbuffer, "%s", inet_ntoa(clientaddr.sin_addr));
                             fprintf(fd, "%s", textbuffer);
                             fclose(fd);
                         }
