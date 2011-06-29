@@ -65,6 +65,7 @@ class Klient:
             print "Połączenie z serwerem zerwane!"
             return
         else:
+            filename = filename + '\0'
             dane_do_wyslania = "FIND_FILE %s" % (filename)
             self.send_msg(dane_do_wyslania)
 
@@ -79,16 +80,19 @@ class Klient:
             print "Połączenie z serwerem zerwane!"
             return
         else:
+            #przesyla o plik zapytanie do serwera
+            filename = filename + '\0'
             dane_do_wyslania = "GET_FILE %s" % (filename)
             self.send_msg(dane_do_wyslania)
-            odpowiedz = self.recv_message()
-
-    """
-    Przesyla plik do klienta.
-    """
-    def send_file(self):
-        pass
-
+            cli_data = self.recv_message() #powinien otrzymac liste adresowa klienta w postaci ['addr','port']
+            print cli_data
+            """
+            try:
+                self.fileClient.connect(clientaddr,clientport)
+            except socket.error, (value,message):
+                print "Nie mozna pobrac pliku!"
+                return
+            """
     """
     Sprawdza, czy polaczenie TCP z serwerem jest nadal aktywne
     """

@@ -30,26 +30,18 @@ int main(int argc, char *argv[])
     int servPort;
     int result;
     int pid = 0;
-    char logfilename[32];
     char filename[32];
 
     char przekroczona_liczba_klientow[] = "ERROR: Przekroczona liczba klientow";
 
-    if (argc < 2 || argc > 3) {
-       fprintf(stderr, "Usage: %s <port> [log_file_name]\n",argv[0]);
+    if (argc < 2) {
+       fprintf(stderr, "Usage: %s <port>\n",argv[0]);
        exit(1);
     }
 
-    if(argc == 3)
+    if( (fp = fopen("log","a")) != NULL )
     {
-        sprintf(logfilename, "%s", argv[2]);
-    }
-    else
-        sprintf(logfilename, "%s", "/var/log/wup.log");
-
-    if( (fp = fopen(logfilename,"a")) != NULL )
-    {
-        printf("INFO: Pomyslnie otwarto plik log: %s\n",logfilename);
+        printf("INFO: Pomyslnie otwarto plik log.\n");
     }
     else
     {
@@ -146,7 +138,7 @@ int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr)
     //char nawiazano_polaczenie[] = "Nawiazano polaczenie pomyslnie!\n";
     //char ERROR_problem_z_polaczeniem[] = "ERROR";
     char connNumber[2]; /* liczba polaczen max 99 */
-
+    FILE *fd;
     /* -- etap klienta -
     K. Klient probuje nawiazac polaczenie
     S. Serwer akceptuje polaczenie
@@ -157,7 +149,7 @@ int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr)
     //if (recvfrom(clientFd, buff, 255, 0, (struct sockaddr *)&clientaddr, &klientDl) > 0)
     while(1)
     {
-        if( (fp = fopen("/var/log/wup.log","a")) == NULL)
+        if( (fp = fopen("log","a")) == NULL)
         {
             printf("ERROR: Nie mozna otworzyc pliku log. Zamykam serwer.\n");
             exit(1);
@@ -191,6 +183,18 @@ int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr)
                     else
                     {
                         printf("INFO: Doszedl nowy klient: %s:%d\n", inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
+                        sprintf(filename, "session/CLIENT_%i",childCount);
+                        if((fd = fopen(filename,"a")) == NULL )
+                        {
+                            perror("ERROR: Nie mozna utworzyc pliku sesji! Zamykam serwer.");
+                            exit(1);
+                        }
+                        else
+                        {
+                            sprintf(textbuffer, "['%s','%d']", inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
+                            fprintf(fd, "%s", textbuffer);
+                            fclose(fd);
+                        }
                     }
                     /* dodaj informacje do loga */
                     fprintf(fp, "INFO: Nawiazano nowe polaczenie!\n");
@@ -201,8 +205,8 @@ int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr)
             {
                 msg_from_client = strtok(buff," ");
                 msg_from_client = strtok(NULL," ");
-                sprintf(filename, "%s", msg_from_client);
 
+                sprintf(filename, "%s", msg_from_client);
                 /* zapisz info do logu */
                 sprintf(textbuffer, "INFO: Klient szuka plik: %s\n", filename);
                 fprintf(fp, "%s", textbuffer);
@@ -229,10 +233,20 @@ int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr)
             /* przychodzi zadanie od klienta - klient chce otrzymac plik */
             if (strncmp(buff, "GET_FILE ",9) == 0)
             {
-                msg_from_client = strtok(buff, " ");
-                msg_from_client = strtok(NULL, " ");
+                msg_from_client = strtok(buff," ");
+                msg_from_client = strtok(NULL," ");
                 sprintf(filename, "%s", msg_from_client);
-                send_file(clientFd, clientaddr, filename);
+
+                if( send_file(clientFd, clientaddr, filename) < 0)
+                {
+                    perror("ERROR: Nie mozna przeslac pliku. Plik nie istnieje lub inny powod!\n");
+                    sprintf(textbuffer, "%s","Nie mozna przeslac pliku.");
+                    if( send_message(clientFd, clientaddr, textbuffer) < 0)
+                    {
+                        fprintf(fp, "%s", "ERROR: Nie mozna przeslac pliku. Plik nie istnieje lub inny powod.\n");
+                    }
+                }
+
             }
             /* klient przeslal swoja nowa liste plikow.. zapisz ja */
             if (strncmp(buff, "SHOW_FILES ", 11) == 0)
