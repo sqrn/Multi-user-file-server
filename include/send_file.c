@@ -24,7 +24,7 @@ int send_file(int clientFd, struct sockaddr_in clientaddr, char filename[32])
     int cli_id;
     FILE *fh;
     char filepath[32];
-    char linia[32];
+    char linia[16];
     char textbuffer[MAX_BUFFER];
 
     printf("INFO: Klient chce otrzymac plik: %s\n", filename);
@@ -42,7 +42,7 @@ int send_file(int clientFd, struct sockaddr_in clientaddr, char filename[32])
     sprintf(filepath, "session/CLIENT_%i",cli_id);
     if( (fh = fopen(filepath, "r")) != NULL)
     {
-        if(fgets(linia, 32, fh) != NULL)
+        if(fscanf(fh, "['%s']", linia) == 1)
         {
             sprintf(textbuffer,"%s",linia);
             if(send(clientFd, textbuffer, sizeof(textbuffer), 0) < 0)

@@ -19,9 +19,13 @@ class Klient:
             self.myfilelist = os.listdir(dest)
 
         self.session_key = -1
-
+        self.is_connection = 0
 
     def make_connection(self):
+
+        if(self.is_connection == 1):
+            print "Masz juz polaczenie z serwerem."
+            return
         try:
             self.clientFd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.fileClient = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -73,7 +77,7 @@ class Klient:
             print "Serwer: %s" % (odpowiedz)
             return
     """
-    Metoda pobiera plik od klienta.
+    Metoda pobiera plik od klienta. Max 4096 bajty
     """
     def get_file(self,filename):
         if(self.check_connection() is False):
@@ -83,14 +87,15 @@ class Klient:
         filepath = filename + '\0'
         dane_do_wyslania = "GET_FILE %s" % (filepath)
         self.send_msg(dane_do_wyslania)
-        cli_data = self.recv_message() #powinien otrzymac liste adresowa klienta w postaci ['addr','port']
+        cli_data = self.recv_message() #powinien otrzymac adres klienta
         #po otrzymaniu informacji o adresie IP klienta posiadajacego plik....
-        #address = (cli_data,9999)
+        address = (cli_data,9999)
         outfile = open("download/"+filename,"w",4096)
         #print address
 
         try:
             self.fileClient.connect(('127.0.0.1',9999))
+            #self.fileClient.connect(address)
         except socket.error, (value,message):
             print "Nie mozna nawiac polaczenia z klientem!\n"
             return
@@ -110,6 +115,7 @@ class Klient:
         try:
             self.fileClient.send("DONE")
             succes = 1
+            print "Pobrano plik pomyślnie."
         except socket.error, (value,msg):
             print "Nie mozna zakonczyc polaczenia!"
             return
@@ -158,6 +164,8 @@ class Klient:
             print "Blad polaczenia\n"
             return
 
+    def showMyID(self):
+        print self.session_key
 
     def prompt(self):
         promp = raw_input("wup(live)# ")
@@ -195,6 +203,8 @@ class Klient:
                     self.find_file(promp[1])
                 else:
                     print "Uzycie: find <nazwa_szukanego_pliku>"
+            elif promp[0] == 'id':
+                self.showMyID()
             elif promp[0] == 'quit':
                 self.pozegnaj_sie()
                 sys.exit(1)

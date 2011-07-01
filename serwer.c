@@ -1,4 +1,5 @@
 /**
+ * Wzajemne Udostepnianie Plikow - projekt na zaliczenie Programowanie aplikacji klient serwer
  * Mariusz Skora
  * album: 10916
  *
@@ -23,6 +24,17 @@ int childCount=0;
 int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr);
 void sig_child(int s);
 
+/**
+ * sAddr - przechowuje dane adresowe serwera
+ * listensock - gniazdo połączenia serwera
+ * servPort - port serwera
+ * result - zmienna przechowująca rezultalt wykonania funkcji koniecznych do poprawnego działania programu;
+ gdy result < 0, program kończy pracę
+ * pid - przechowuje wynik tworzenia procesu potomnego - funkcji fork()
+ * filename - nazwa pliku; w głównej części programu wykorzystywana tylko dla pliku logowania
+ *
+ * Funkcja MAIN. Główna funkcja programu. Tworzenie gniazda, połączenia i odpowiadanie za procesów. Wywoływanie funkcji obsługującej potomka.
+ */
 int main(int argc, char *argv[])
 {
     struct sockaddr_in sAddr;
@@ -54,6 +66,9 @@ int main(int argc, char *argv[])
        perror("ERROR: Nie mozna utworzyc gniazda!\n");
        exit(1);
     }
+
+    signal(SIGCHLD,sig_child);
+
     servPort=atoi(argv[1]);
 
     sAddr.sin_family = AF_INET;
@@ -89,7 +104,7 @@ int main(int argc, char *argv[])
                     /*zapisz do logu */
                     fprintf(fp, "%s", "ERROR: Przekroczona liczba klientow!\n");
                     close(sock_cli);
-                    exit(0);
+                    sleep(3);
                 }
                 /* obsluga klienta */
                 if( przetwarzaj_klienta(sock_cli, sAddr) < 0 )
@@ -127,6 +142,25 @@ void sig_child(int s)
     while ( waitpid(-1, 0, WNOHANG) > 0 )
     childCount --;
 }
+/**
+ * Funkcja uruchamiana dla każdego oddzielnego procesu. Obsługuje przychodzącego klienta.
+ * 1. Komunikacja w serwerze oparta jest na protokole TCP. W funkcji przetwarzaj_klienta() działa nieskończona pętla, która rejestruje ruch przychodzący od klientów
+ łączących się z serwerem. Odpowiada za to funkcja recv(clientFd, buff, 255,0). W dalszej części za pomocą funkcji strcmp następuje porównanie zmiennej buff do obsługiwanych
+ przez serwer komunikatów. Poniżej ich lista:
+ HELLO - przesyła każdy nowy klient, który nawiazuje połączenie z serwerem
+ FIND_FILE - za komunikatem znajduje się nazwa pliku, której szuka klient. Musi być ciągiem nie przerwanym białą linią.
+ GET_FILE - za komunikatem znajduje się nazwa pliku, który klient chce pobrać. Musi być ciągiem nie przerwanym białą linią.
+ SHOW_FILES - za komunikatem znajduje się lista plików, które udostępnia klient w swoim katalogu. Nazwy plików oddzielone sa białym znakiem spacji.
+ BYE - komunikat kończący połączenie klienta z serwerem. Przesyła go klient w momencie zakończenia swojej pracy.
+ * Zmienne:
+ * klientDl - przechowuje rozmiar pola adresu serwera
+ * buff - przechowuje komunikat przesyłany przez klienta
+ * textbuffer - ogólna zmienna używana do przesyłania komunikatu do klienta
+ * filename - nazwa pliku wskazana przez klienta
+ * *msg_from_client - wskaźnik na typ char, przechowuje komunikat klienta oddzielony przez funkcję strtok
+ * connNumber - przechowuje bierzący numer połączenia - id klienta
+ * *fd - wskaźnik na typ FILE, jest deskryptorem pliku log
+ */
 int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr)
 {
     unsigned int klientDl;
@@ -192,7 +226,7 @@ int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr)
                         else
                         {
                             sprintf(textbuffer, "%s", inet_ntoa(clientaddr.sin_addr));
-                            fprintf(fd, "%s", textbuffer);
+                            fprintf(fd, "['%s']", textbuffer);
                             fclose(fd);
                         }
                     }
@@ -218,7 +252,6 @@ int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr)
                     if(send_message(clientFd, clientaddr, textbuffer) < 0)
                         fprintf(fp, "%s", "ERROR: Plik nie odnaleziony. Nie mozna poinformowac klienta!\n");
                 }
-                /* wyslij informacje do klienta, ze odnalazles szukany plik */
                 else
                 {
                     sprintf(textbuffer, "%s", "Plik odnaleziony!");

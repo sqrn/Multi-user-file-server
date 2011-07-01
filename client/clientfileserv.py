@@ -8,6 +8,9 @@ from threading import Thread
 import time
 from types import *
 
+"""
+
+"""
 class ClientFileServer(Thread):
 
     def __init__(self, port=9999, path=None):

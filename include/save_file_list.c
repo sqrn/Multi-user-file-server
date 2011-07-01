@@ -3,7 +3,7 @@
 #define MAX_BUFFER 80
 
 /**
-Zapisuje przesłaną przez klienta listę plików. Zapisuje w pliku sesji.
+Zapisuje przesłaną przez klienta listę plików. Zapisuje w pliku sesji w katalogu session/.
 */
 void save_file_list(char buff[255], char client[16])
 {
