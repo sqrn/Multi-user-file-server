@@ -15,7 +15,7 @@ class ClientFileServer(Thread):
 
     def __init__(self, port=9999, path=None):
         Thread.__init__(self)
-        self.path = '/home/mariusz/workspace/cpp/projekt_pap/WUP/client/myfiles/'
+        self.path = 'myfiles'
         self.alive = True
         self.port = port
 

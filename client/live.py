@@ -8,13 +8,18 @@ import threading
 #import getopt
 from clientfileserv import ClientFileServer
 
+
 class Klient:
 
     def __init__(self,dest=None):
         #self.address = (address,port)
         #Przed zalogowaniem klucz sesji ma inna wartosc niz 0
         if dest is None:
-            self.myfilelist = os.listdir('/home/mariusz/workspace/cpp/projekt_pap/WUP/client/myfiles')
+            try:
+                os.mkdir('myfiles')
+                self.myfilelist = os.listdir('myfiles')
+            except OSError:
+                self.myfilelist = os.listdir('myfiles')
         else:
             self.myfilelist = os.listdir(dest)
 
@@ -186,6 +191,8 @@ class Klient:
                     self.address = (promp[1],int(promp[2]))
                     if(int(promp[2]) > 65535):
                         print "Port musi mieścić się w zakresie 0-65535\n"
+                        continue
+                    if len(promp) < 3:
                         continue
                     self.make_connection()
                     continue
