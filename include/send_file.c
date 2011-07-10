@@ -7,14 +7,17 @@
 #define MAXCLIENTS 10
 
 
-/**
+/*!
+\file send_file.c
 Funkcja przesyla do klienta wskazany przez niego plik.
 ETAPY:
-1. Przeszukuje baze plikow sesji polaczonych obecnie klientow.
-2. Jezeli serwer znajdzie plik w bazie plikow sesji podłączonych użytkowników, przesyła do klienta dane adresowe klienta, który szukany plik posiada.
-3. Jeżeli plik nie zostanie znaleziony, funkcja zwraca -1.
-4. Po poprawnym ukończeniu przesyłania danych, funkcja zwraca 0.
-*/
+\li \c 1. Przeszukuje baze plikow sesji polaczonych obecnie klientow.
+\li \c 2. Jezeli serwer znajdzie plik w bazie plikow sesji podłączonych użytkowników, przesyła do klienta dane adresowe klienta, który szukany plik posiada.
+\li \c 3. Jeżeli plik nie zostanie znaleziony, funkcja zwraca -1.
+\li \c 4. Po poprawnym ukończeniu przesyłania danych, funkcja zwraca 0.
+\retval -1 w razie niepowodzenia
+\retval 0 w razie powodzenia
+**/
 int find_users_file(int clientFd, struct sockaddr_in clientaddr, char filename[32]);
 int send_file(int clientFd, struct sockaddr_in clientaddr, char filename[32])
 {
@@ -53,6 +56,11 @@ int send_file(int clientFd, struct sockaddr_in clientaddr, char filename[32])
     }
     return -1;
 }
+/*!
+Funkcja przeszukuje pliki sesyjne w katalogu session w poszukiwaniu nazwy pliku szukanej przez klienta.
+\retval -1 jeżeli plik nie zostanie odnaleziony
+\retval i ID klienta posiadający szukany plik
+**/
 int find_users_file(int clientFd, struct sockaddr_in clientaddr, char filename[32])
 {
     FILE *fh;

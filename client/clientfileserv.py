@@ -8,17 +8,17 @@ from threading import Thread
 import time
 from types import *
 
-"""
 
-"""
+## Klasa ClientFileServer dziedziczy po klasie threading.Thread. Tworzy wątek i umożliwia przesyłanie pliku do innego klienta.
 class ClientFileServer(Thread):
 
+    ## Konstruktor klasy ClientFileServ. Ustawia katalog przeszukiwania pliku oraz port przekazany jako argument metody.
     def __init__(self, port=9999, path=None):
         Thread.__init__(self)
         self.path = 'myfiles'
         self.alive = True
         self.port = port
-
+    ## Tworzy gniazdo połączenia. Na końcu uruchamia metodę listen_sock() która rozpoczyna pętle nasłuchiwania.
     def run(self):
         try:
             self.s = socket(AF_INET,SOCK_STREAM)
@@ -30,7 +30,7 @@ class ClientFileServer(Thread):
                 self.s.close()
             print "Nie można utworzyć połączenia dla serwera plików na porcie %s" % port
             sys.exit(0)
-
+    ## Rozpoczyna pętle, w której obsługiwany jest żądany proces obsługi klienta.
     def listen_sock(self):
         while(self.alive):
             client,addr = self.s.accept() #zwraca deskryptor polaczenia i adres polaczonego klienta
@@ -50,7 +50,7 @@ class ClientFileServer(Thread):
 
 
 
-
+    ## Przeszukuje lokalny katalog udostępnianych plików w poszukiwaniu żądanego przez partnera połączenia pliku.
     def find_file(self,filename):
         path = os.listdir(self.path)
         if filename in path:
@@ -58,10 +58,10 @@ class ClientFileServer(Thread):
         else:
             return False
 
-
+    ## Przesyła do partnera żądany plik. Oczekuje, że partner po ukończeniu prześle komunikat "DONE". Jeżeli tak będzie, gniazdo obsługi tego klienta wygaśnie.
     def send_file(self,client,filename):
-        p = self.path + filename
-        print p
+        p = self.path + "/" + filename
+        #print p
         try:
             fd = open(p,"r")
         except IOError:
@@ -76,6 +76,7 @@ class ClientFileServer(Thread):
             #print "Klient %s sie rozlaczyl!" % addr
             client.close()
 
+    ## Wyłącza wątek obsługujący przesyłanie plików.
     def stop(self):
         self.alive = False
 

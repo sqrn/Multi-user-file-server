@@ -5,11 +5,14 @@
 #define MAX_BUFFER 80
 #define MAXCLIENTS 10
 
-/**
+/*!
+\file find_file.c
 Funkcja przeszukuje pliki sesji połączonych użytkowników w celu znalezienia szukanego przez klienta wysyłającego zapytanie - pliku.
 Jeżeli funkcja odnajdzie wskazany plik - zwraca ID klienta, który plik posiada.
 W innym razie funkcja zwraca -1.
-*/
+\retval -1 jeżeli plik nie zostanie odnaleziony
+\retval 0 jeżeli plik został odnaleziony
+**/
 int find_file(int clientFd, struct sockaddr_in clientaddr, char filename[32])
 {
     FILE *fh;
@@ -31,7 +34,7 @@ int find_file(int clientFd, struct sockaddr_in clientaddr, char filename[32])
                     fclose(fh);
                     printf("INFO: Plik posiada klient o ID: CLIENT_%i\n",i);
                     /* zwraca numer klienta, ktorzy posiada szukany plik - conajmniej 0 */
-                    return i;
+                    return 0;
                 }
             }
             fclose(fh);

@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 import sys
 import os
 import socket
@@ -8,9 +7,10 @@ import threading
 #import getopt
 from clientfileserv import ClientFileServer
 
-
+##Klasa Klient.
 class Klient:
 
+    ## Konstruktor klasy Klient. Ustawia katalog plików, jeżeli go nie ma, tworzy go.
     def __init__(self,dest=None):
         #self.address = (address,port)
         #Przed zalogowaniem klucz sesji ma inna wartosc niz 0
@@ -26,8 +26,8 @@ class Klient:
         self.session_key = -1
         self.is_connection = 0
 
+    ## Tworzy gniazdo połączenia i nawiązuje połączenie z serwerem. Wykorzystuje adres i port serwera przekazany w funkcji live.
     def make_connection(self):
-
         if(self.is_connection == 1):
             print "Masz juz polaczenie z serwerem."
             return
@@ -51,8 +51,7 @@ class Klient:
         except socket.error, msg:
             print "Nie można nawiazać połaczenia. "
             return
-
-
+    ## Przesyła do serwera listę plików z katalogu wskazanym w konstruktorze __init__ lub (jeżeli nie został wskazany katalog) myfiles.
     def send_file_list(self):
         if(self.check_connection() is False):
             print "Połączenie z serwerem zerwane!"
@@ -66,9 +65,8 @@ class Klient:
 
     def change_myfiles_dir(self, dirpath):
         self.myfilelist = os.listdir(dirpath)
-    """
-    Wysyla do serwera pytanie o plik. Uzyskuje adres IP klienta, ktory plik posiada.
-    """
+
+    ## Wysyla do serwera pytanie o plik. Uzyskuje adres IP klienta, ktory plik posiada.
     def find_file(self, filename):
         if(self.check_connection() is False):
             print "Połączenie z serwerem zerwane!"
@@ -81,9 +79,7 @@ class Klient:
             odpowiedz = self.recv_message()
             print "Serwer: %s" % (odpowiedz)
             return
-    """
-    Metoda pobiera plik od klienta. Max 4096 bajty
-    """
+    ## Metoda pobiera plik od klienta. Max 4096 bajty
     def get_file(self,filename):
         if(self.check_connection() is False):
             print "Połączenie z serwerem zerwane!"
@@ -127,20 +123,15 @@ class Klient:
 
         if succes == 1:
             self.fileClient.close()
-
-    """
-    Sprawdza, czy polaczenie TCP z serwerem jest nadal aktywne
-    """
+    ## Sprawdza, czy polaczenie TCP z serwerem jest nadal aktywne
     def check_connection(self):
         if self.is_connection > 0:
             return True
         else:
             return False
 
-    """
-    Ogolna funkcja. Przesyla komunikat do serwera. Jezeli wystapi wyjatek, metoda zostanie przerwane i wyswietlony
-    zostanie odpowiedni komunikat
-    """
+    ## Ogolna funkcja. Przesyla komunikat do serwera. Jezeli wystapi wyjatek, metoda zostanie przerwane i wyswietlony
+    ## zostanie odpowiedni komunikat
     def send_msg(self, msg):
         if(self.check_connection() is False):
             print "Połączenie z serwerem zerwane!"
@@ -154,10 +145,8 @@ class Klient:
             print "Serwer odrzuca polaczenie! " + message
             return
 
-    """
-    Ogólna funkcja. Odczytuje z serwera przesłany komunikat. Zapisuje do zmiennej 'odpowiedz' i zwraca go.
-    Jezeli wystąpi wyjątek, metoda zostanie przerwana i wyświetlony zostanie komunikat.
-    """
+    ## Ogólna funkcja. Odczytuje z serwera przesłany komunikat. Zapisuje do zmiennej 'odpowiedz' i zwraca go.
+    ## Jezeli wystąpi wyjątek, metoda zostanie przerwana i wyświetlony zostanie komunikat.
     def recv_message(self):
         try:
             odpowiedz = self.clientFd.recv(80)
@@ -168,15 +157,17 @@ class Klient:
         except NameError:
             print "Blad polaczenia\n"
             return
-
+    ## Pokazuje ID klienta przekazany przez serwer.
     def showMyID(self):
         print self.session_key
 
+    ## Funkcja wykonywana w live(self) w pętli.
     def prompt(self):
         promp = raw_input("wup(live)# ")
         promp = promp.split()
         return promp
 
+    ## Główna funkcja programu. Sprawdza polecenia przekazane do programu i na podstawie ich, wykonuje kolejne metody klasy Klient.
     def live(self):
         #clean()
         print "WUP - Wzajemne udostępnianie plików. Program klient-serwer. Wersja klient.\n\
@@ -227,13 +218,14 @@ class Klient:
 
 
 
-
+    ## Funkcja kończąca połączenie z serwerem.
     def pozegnaj_sie(self):
         self.send_msg("BYE")
-
+## Czyści ekran.
 def clean(self):
     print "\n" * 100
 
+## Jak używać programu.
 def usage():
     version()
     print "connect \t<adres> <port>\tNawiazuje polaczenie z serwerem"
@@ -245,11 +237,12 @@ def usage():
 
     print "help\t\t\t\tWyswietla pomoc"
 
+## Drukuje wersję programu, autora i inne informacje.
 def version():
 	print "Wersja programu: 1.0 Alfa, klient.\nAutor: Mariusz Skóra\nProjekt PAP - 2010/2011\n"
 
 
-
+## Tworzenie instancji klas Klient() i ClientFileServer(). W razie przerwania aplikacji przez klienta (przechwycenie sygnału zakończenia ^C), wykonuje funkcję pozegnaj_sie().
 def main():
     #uzyc getopt!
     threads = []

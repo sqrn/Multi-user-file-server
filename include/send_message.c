@@ -4,9 +4,12 @@
 #include <stdio.h>
 #define MAX_BUFFER              80
 
-/**
-Ogólna funkcja programowa. Wysyła do serwera komunikat
-*/
+/*!
+\file send_message.c
+Ogólna funkcja programowa. Przesyła do połączonego klienta komunikat
+\retval -1 komunikat nie został przesłany
+\retval 0 jeżeli komunikat zostanie przesłany poprawnie
+**/
 int send_message(int clientFd, struct sockaddr_in clientaddr, char textbuffer[MAX_BUFFER+1])
 {
     int textDl;

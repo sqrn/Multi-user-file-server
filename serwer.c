@@ -1,9 +1,35 @@
-/**
- * Wzajemne Udostepnianie Plikow - projekt na zaliczenie Programowanie aplikacji klient serwer
- * Mariusz Skora
- * album: 10916
- *
-*/
+/*!
+\mainpage Wzajemne udostepnianie plikow - Projekt zaliczeniowy z Programowania Aplikacji klient-serwer
+\author Mariusz Skóra skoram@wit.edu.pl
+\version 0.1 Alfa
+\date 2011
+
+\section sec1 Dokumentacja
+\subsection subsec1 Opis ogolny
+Program realizuje wzajemne udostepnianie plikow w sieci. Serwer rejestruje i autoryzuje klientów, przechowuje
+listy udostępnionych przez nich plików oraz umożliwia wyszukanie żądanego pliku.
+Klient loguje się na serwerze. Po zalogowaniu może przesłać do serwera listę plików. Moze również wyszukać żadany plik.
+Klient po otrzymaniu od serwera danych innego klienta, który posiada szukany plik, przesyła do niego prośbę o przesłanie pliku.
+Drugi klient po otrzymaniu prośby o plik przeszukuje lokalny, bierzący folder w poszukiwaniu pliku o zadanej nazwie i w razie sukcesu przesyła go.
+
+\subsection subsec2 Struktura działania
+Serwer przechowuje informację o nawiązanych połączeniach z klientem w plikach tekstowych w katalogu 'session'.
+Pliki mają nazwę w postaci - CLIENT_x, gdzie x to numer kolejnego połączenia.
+Zapisana jest ona w postaci:\n
+['adres IP']\n
+//lista plików udostępnianych\n przez\n klienta linia\n po lini
+
+\subsection subsec3 Obsługa klienta
+Jeżeli któryś z klientów zarząda przeszukania jakiegoś pliku, serwer przeszukuje wszystkie pliki sesyjne. Jeżeli natknie się na nazwę pliku, serwer uznaje, że plik został odnaleziony.
+Przesyła do klienta informację o powodzeniu przeszukiania.
+
+Klient może zarządać przesłania pliku. W takiej sytuacji, serwer przeszukuje pliki sesyjne. Jeżeli natknie się na nazwę pliku, przesyła adres IP klienta, który ten plik posiada.
+Klient prześle żadanie pliku do klienta plik udostępniający. Drugi klient, jeżeli znajdzie taki plik w swoim katalogu, pozwoli go przesłać. Po procesie, oczekuje, że drugi partner
+prześle informację o powodzeniu w postaci komunikatu DONE. Klient przechowuje pobierane pliki w katalogu download.
+
+
+
+**/
 
 #include "functions.h"
 
@@ -24,17 +50,19 @@ int childCount=0;
 int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr);
 void sig_child(int s);
 
-/**
- * sAddr - przechowuje dane adresowe serwera
- * listensock - gniazdo połączenia serwera
- * servPort - port serwera
- * result - zmienna przechowująca rezultalt wykonania funkcji koniecznych do poprawnego działania programu;
- gdy result < 0, program kończy pracę
- * pid - przechowuje wynik tworzenia procesu potomnego - funkcji fork()
- * filename - nazwa pliku; w głównej części programu wykorzystywana tylko dla pliku logowania
- *
- * Funkcja MAIN. Główna funkcja programu. Tworzenie gniazda, połączenia i odpowiadanie za procesów. Wywoływanie funkcji obsługującej potomka.
- */
+/*!
+\file serwer.c
+\li \c sAddr - przechowuje dane adresowe serwera\n
+\li \c listensock - gniazdo połączenia serwera\n
+\li \c servPort - port serwera\n
+\li \c result - zmienna przechowująca rezultalt wykonania funkcji koniecznych do poprawnego działania programu;\n
+\li \c gdy result < 0, program kończy pracę\n
+\li \c pid - przechowuje wynik tworzenia procesu potomnego - funkcji fork()\n
+\li \c filename - nazwa pliku; w głównej części programu wykorzystywana tylko dla pliku logowania\n
+
+Funkcja MAIN. Główna funkcja programu. Tworzenie gniazda, połączenia i odpowiadanie za procesów. Wywoływanie funkcji obsługującej potomka.
+
+**/
 int main(int argc, char *argv[])
 {
     struct sockaddr_in sAddr;
@@ -142,25 +170,32 @@ void sig_child(int s)
     while ( waitpid(-1, 0, WNOHANG) > 0 )
     childCount --;
 }
-/**
- * Funkcja uruchamiana dla każdego oddzielnego procesu. Obsługuje przychodzącego klienta.
- * 1. Komunikacja w serwerze oparta jest na protokole TCP. W funkcji przetwarzaj_klienta() działa nieskończona pętla, która rejestruje ruch przychodzący od klientów
- łączących się z serwerem. Odpowiada za to funkcja recv(clientFd, buff, 255,0). W dalszej części za pomocą funkcji strcmp następuje porównanie zmiennej buff do obsługiwanych
- przez serwer komunikatów. Poniżej ich lista:
- HELLO - przesyła każdy nowy klient, który nawiazuje połączenie z serwerem
- FIND_FILE - za komunikatem znajduje się nazwa pliku, której szuka klient. Musi być ciągiem nie przerwanym białą linią.
- GET_FILE - za komunikatem znajduje się nazwa pliku, który klient chce pobrać. Musi być ciągiem nie przerwanym białą linią.
- SHOW_FILES - za komunikatem znajduje się lista plików, które udostępnia klient w swoim katalogu. Nazwy plików oddzielone sa białym znakiem spacji.
- BYE - komunikat kończący połączenie klienta z serwerem. Przesyła go klient w momencie zakończenia swojej pracy.
- * Zmienne:
- * klientDl - przechowuje rozmiar pola adresu serwera
- * buff - przechowuje komunikat przesyłany przez klienta
- * textbuffer - ogólna zmienna używana do przesyłania komunikatu do klienta
- * filename - nazwa pliku wskazana przez klienta
- * *msg_from_client - wskaźnik na typ char, przechowuje komunikat klienta oddzielony przez funkcję strtok
- * connNumber - przechowuje bierzący numer połączenia - id klienta
- * *fd - wskaźnik na typ FILE, jest deskryptorem pliku log
- */
+/*!
+Funkcja uruchamiana dla każdego oddzielnego procesu. Obsługuje przychodzącego klienta.
+1. Komunikacja w serwerze oparta jest na protokole TCP. W funkcji przetwarzaj_klienta() działa nieskończona pętla, która rejestruje ruch przychodzący od klientów
+łączących się z serwerem. Odpowiada za to funkcja recv(clientFd, buff, 255,0). W dalszej części za pomocą funkcji strcmp następuje porównanie zmiennej buff do obsługiwanych
+przez serwer komunikatów. Poniżej ich lista:
+
+\li \c HELLO - przesyła każdy nowy klient, który nawiazuje połączenie z serwerem\n
+\li \c FIND_FILE - za komunikatem znajduje się nazwa pliku, której szuka klient. Musi być ciągiem nie przerwanym białą linią.\n
+\li \c GET_FILE - za komunikatem znajduje się nazwa pliku, który klient chce pobrać. Musi być ciągiem nie przerwanym białą linią.\n
+\li \c SHOW_FILES - za komunikatem znajduje się lista plików, które udostępnia klient w swoim katalogu. Nazwy plików oddzielone sa białym znakiem spacji.\n
+\li \c BYE - komunikat kończący połączenie klienta z serwerem. Przesyła go klient w momencie zakończenia swojej pracy.\n
+
+* Zmienne:\n
+\li \c klientDl - przechowuje rozmiar pola adresu serwera\n
+\li \c buff - przechowuje komunikat przesyłany przez klienta\n
+\li \c textbuffer - ogólna zmienna używana do przesyłania komunikatu do klienta\n
+\li \c filename - nazwa pliku wskazana przez klienta\n
+\li \c *msg_from_client - wskaźnik na typ char, przechowuje komunikat klienta oddzielony przez funkcję strtok\n
+\li \c connNumber - przechowuje bierzący numer połączenia - id klienta\n
+\li \c *fd - wskaźnik na typ FILE, jest deskryptorem pliku log\n
+
+Proces obsługi klienta:\n
+- Klient probuje nawiązać połączenie z serwerem.\n
+- Jeżeli klient prześle sygnał "HELLO", rejestruje nowe połączenie i przesyła do klienta ID połączenia\n.
+- Klient może przesłać dowolne obsługiwane polecenie. Może wysłać swoją listę plików i/lub przeszukać zasoby w poszukiwaniu pliku do pobrania.
+**/
 int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr)
 {
     unsigned int klientDl;
@@ -174,12 +209,8 @@ int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr)
     char connNumber[2]; /* liczba polaczen max 99 */
     FILE *fd;
     /* -- etap klienta -
-    K. Klient probuje nawiazac polaczenie
-    S. Serwer akceptuje polaczenie
-    K. Klient przesyla powitanie - Hello.
-    S. Serwer sprawdza, czy klient sie przywital i przesyla do niego numer polaczenia. Dalej zezwala na dalszy proces.
-    K. Klient otrzymuje numer polaczenia od serwera. Od teraz mozliwe przesylanie plikow.
-    -- etap klienta -- */
+
+-- etap klienta -- */
     //if (recvfrom(clientFd, buff, 255, 0, (struct sockaddr *)&clientaddr, &klientDl) > 0)
     while(1)
     {
@@ -201,11 +232,11 @@ int przetwarzaj_klienta(int clientFd, struct sockaddr_in clientaddr)
                     /*zapisz do logu */
                     fprintf(fp, "%s", "ERROR: Nie mozna przeslac wiadomosci do klienta!\n");
                     /* powiadom klienta
-                    send(clientFd,
-                         ERROR_problem_z_polaczeniem,
-                         sizeof(ERROR_problem_z_polaczeniem),
-                         0);
-                    */
+send(clientFd,
+ERROR_problem_z_polaczeniem,
+sizeof(ERROR_problem_z_polaczeniem),
+0);
+*/
                     return -1;
                 }
                 else
